@@ -86,6 +86,28 @@
         <property name="externalUserControlSubsystemName">
         	<value>${synchronization.externalUserControlSubsystemName}</value>
         </property>
+
+        <!-- ldapmt START -->        
+        <property name="authenticationContext">
+            <ref bean="authenticationContext" />
+        </property>
+        <property name="tenantAdminService">
+            <ref bean="tenantAdminService" />
+        </property>
+        <property name="userSearchBase">
+            <value>${ldapmt.synchronization.userSearchBase}</value>
+        </property>
+        <property name="groupSearchBase">
+            <value>${ldapmt.synchronization.groupSearchBase}</value>
+        </property>
+        <property name="personQuery">
+            <value>${ldapmt.synchronization.personQuery}</value>
+        </property>
+        <property name="personDifferentialQuery">
+            <value>${ldapmt.synchronization.personDifferentialQuery}</value>
+        </property>
+        <!-- ldapmt END -->
+        
     </bean>
 
 
