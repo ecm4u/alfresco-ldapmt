@@ -229,7 +229,8 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
     private String userSearchBase = "ou=people,DC=example,DC=com";
     private String groupSearchBase = "o={tenant},DC=example,DC=com";
     private String personQuery = "(&(objectclass=inetOrgPerson)(memberOf=CN={TENANT}_USERS,o={tenant},DC=example,DC=com))";
-    private String personDifferentialQuery = "(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN={TENANT}_USERS,o=,o={tenant}s,DC=example,DC=com))";    
+    private String personDifferentialQuery = "(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN={TENANT}_USERS,o=,o={tenant}s,DC=example,DC=com))";
+    private String authenticationSubsystemType = "ldapmt1";
 
     public void setGroupSearchBase(String groupSearchBase) {
         this.groupSearchBase = groupSearchBase;
@@ -253,9 +254,12 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
     
     public void setTenantAdminService(MultiTAdminServiceImpl tenantAdminService) {
         this.tenantAdminService = tenantAdminService;
-    }
-    
-   /****************************************************
+    }           
+
+    public void setAuthenticationSubsystemType(String authenticationSubsystemType) {
+		this.authenticationSubsystemType = authenticationSubsystemType;
+	}
+	/****************************************************
     * ldapmt customization END                           *
     ****************************************************/
        
@@ -530,70 +534,68 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
     private void synchronizeInternal(boolean forceUpdate, boolean isFullSync, final boolean splitTxns)
     {
-    	        /****************************************************
-    	         * ldapmt customization START                       *
-    	         ****************************************************/     
-    	       if (tenantAdminService == null) {
-    	            logger.error("Tenants nicht gestartet. Breche ab. (" + AuthenticationUtil.getSystemUserName() + ")");
-    	                return;
-    	            }
-    	
-    	//         if (allowDeletions) {
-    	//             logger.warn("Deletion of Users is not supported on ldap with multi tenancy. Disabling...");
-    	//         } else {
-    	//             logger.info("Deletion of Users enabled on ldap with multi tenancy.");
-    	//         }
-    	//         final boolean allowDeletions = false;
-    	           
-    	            List<Tenant> tenants = tenantAdminService.getAllTenants();
-    	            // FIXME ldapmt1 ist zu statisch. Woher bekommen wir diesen Namen?
-    	            ApplicationContext contextForTenants = this.applicationContextManager.getApplicationContext("ldapmt1");
-    	            final LDAPUserRegistry userRegistry = (LDAPUserRegistry) contextForTenants.getBean(this.sourceBeanName);
-    	            for (final Tenant tenant : tenants) {
-    	                final String domain = tenant.getTenantDomain();
-    	                TenantContextHolder.setTenantDomain(domain);
-    	                final String currentTenantDomain = domain;
-    	                try {
-    	                    final TransactionService _transactionService = this.transactionService;
-    	                    final ApplicationEventPublisher _applicationEventPublisher = this.applicationEventPublisher;
-    	                    final JobLockService _jobLockService = this.jobLockService;
-    	                    final ChildApplicationContextManager _applicationContextManager = this.applicationContextManager;
-    	                    AuthenticationUtil.runAs(new RunAsWork<Void>() {
-    	                        @Override
-    	                        public Void doWork() throws Exception {
-    	                            transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-    	                                @Override
-    	                                public Void execute() throws Throwable {
-    	                                    AuthenticationUtil.runAs(new RunAsWork<Void>() {
-    	                                        @Override
-    	                                        public Void doWork() throws Exception {
-    	                                            logger.info("START tenant " + domain);
-    	                                            String systemUserName = authenticationContext.getSystemUserName(domain);
-    	                                            logger.info("systemUserName=" + systemUserName);
-    	                                            AuthenticationUtil.setFullyAuthenticatedUser(systemUserName);
-    	
-    	                                            logger.info("userSearchBase=" + userSearchBase);
-    	                                            userRegistry.setUserSearchBase(userSearchBase);
-    	                                            final String gsb = groupSearchBase.replaceAll("\\{TENANT\\}", domain.toUpperCase()).replaceAll("\\{tenant\\}", domain);
-    	                                            logger.info("groupSearchBase=" + gsb);
-    	                                            userRegistry.setGroupSearchBase(gsb);
-    	                                            final String pq = personQuery.replaceAll("\\{TENANT\\}", domain.toUpperCase()).replaceAll("\\{tenant\\}", domain);
-    	                                            logger.info("personQuery=" + pq);
-    	                                            userRegistry.setPersonQuery(pq);
-    	                                            final String pdq = personDifferentialQuery.replaceAll("\\{TENANT\\}", domain.toUpperCase()).replaceAll("\\{tenant\\}", domain);
-    	                                            logger.info("personDifferentialQuery=" + pdq);
-    	                                            if (logger.isDebugEnabled()) {
-    		                                                logger.debug("TenantContextHolder.getTenantDomain()" + TenantContextHolder.getTenantDomain());
-    		                                                logger.debug("TenantUtil.getCurrentDomain()=" + TenantUtil.getCurrentDomain());
-    		                                                logger.debug("userSearchBase: " + userSearchBase);
-    		                                                logger.debug("groupSearchBase: " + gsb);
-    		                                                logger.debug("setting personQuery: " + pq);
-    		                                                logger.debug("setting personDifferentialQuery: " + pdq);
-    		                                            }
-    		
-    		        /****************************************************
-    		         * ldapmt customization END                         *
-    		         ****************************************************/
+		/****************************************************
+		 * ldapmt customization START *
+		 ****************************************************/
+		if (tenantAdminService == null) {
+			logger.error("Tenants nicht gestartet. Breche ab. (" + AuthenticationUtil.getSystemUserName() + ")");
+			return;
+		}
+
+		List<Tenant> tenants = tenantAdminService.getAllTenants();
+		ApplicationContext contextForTenants = this.applicationContextManager
+				.getApplicationContext(authenticationSubsystemType);
+		final LDAPUserRegistry userRegistry = (LDAPUserRegistry) contextForTenants.getBean(this.sourceBeanName);
+		for (final Tenant tenant : tenants) {
+			final String domain = tenant.getTenantDomain();
+			TenantContextHolder.setTenantDomain(domain);
+			final String currentTenantDomain = domain;
+			try {
+//				final TransactionService _transactionService = this.transactionService;
+//				final ApplicationEventPublisher _applicationEventPublisher = this.applicationEventPublisher;
+//				final JobLockService _jobLockService = this.jobLockService;
+//				final ChildApplicationContextManager _applicationContextManager = this.applicationContextManager;
+				AuthenticationUtil.runAs(new RunAsWork<Void>() {
+					@Override
+					public Void doWork() throws Exception {
+						transactionService.getRetryingTransactionHelper()
+								.doInTransaction(new RetryingTransactionCallback<Void>() {
+									@Override
+									public Void execute() throws Throwable {
+										AuthenticationUtil.runAs(new RunAsWork<Void>() {
+											@Override
+											public Void doWork() throws Exception {
+												String systemUserName = authenticationContext.getSystemUserName(domain);
+												AuthenticationUtil.setFullyAuthenticatedUser(systemUserName);
+
+												userRegistry.setUserSearchBase(userSearchBase);
+
+												final String gsb = groupSearchBase
+														.replaceAll("\\{TENANT\\}", domain.toUpperCase())
+														.replaceAll("\\{tenant\\}", domain);
+												userRegistry.setGroupSearchBase(gsb);
+
+												final String pq = personQuery
+														.replaceAll("\\{TENANT\\}", domain.toUpperCase())
+														.replaceAll("\\{tenant\\}", domain);
+												userRegistry.setPersonQuery(pq);
+
+												final String pdq = personDifferentialQuery
+														.replaceAll("\\{TENANT\\}", domain.toUpperCase())
+														.replaceAll("\\{tenant\\}", domain);
+												userRegistry.setPersonDifferentialQuery(pdq);
+
+												if (logger.isInfoEnabled()) {
+													logger.info("START tenant " + domain);
+													logger.info("systemUserName=" + systemUserName);
+													logger.info("userSearchBase=" + userSearchBase);
+													logger.info("groupSearchBase=" + gsb);
+													logger.info("personQuery=" + pq);
+													logger.info("personDifferentialQuery=" + pdq);
+												}
+												/****************************************************
+												 * ldapmt customization END *
+												 ****************************************************/
     	
         if (ChainingUserRegistrySynchronizer.logger.isDebugEnabled())
         {
@@ -713,43 +715,32 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
             
             for (String id : instanceIds)
             {   
-//                UserRegistry plugin;
-//                try
-//                {
-//                    ApplicationContext context = this.applicationContextManager.getApplicationContext(id);
-//                    plugin = (UserRegistry) context.getBean(this.sourceBeanName);
-//                }
-//                catch (RuntimeException e)
-//                {
-//                    // The bean doesn't exist or this subsystem won't start. The reason would have been logged. Ignore and continue.
-//                    continue;
-//                }
-//                
-//                if (!(plugin instanceof ActivateableBean) || ((ActivateableBean) plugin).isActive())
-//                {
-//                    // yes this plugin needs to be synced
-//                    plugins.put(id, plugin);
-//                }
-            	                /****************************************************
-            	                 * KRZN customization START                         *
-            	                 ****************************************************/
-            	//             ApplicationContext _context = _applicationContextManager.getApplicationContext(id);
-            	               try {
-            	                    UserRegistry plugin = userRegistry;//(UserRegistry) _context.getBean(_sourceBeanName);
-            	                    if (!(plugin instanceof ActivateableBean) || ((ActivateableBean) plugin).isActive()) {
-            	                        logger.info("Synchronizing users and groups with user registry '" + id + "'/'"                             
-            	                                        + tenantAdminService.getCurrentUserDomain() + "'");
-            	                        boolean requiresNew = splitTxns || AlfrescoTransactionSupport.getTransactionReadState() == TxnReadState.TXN_READ_ONLY; 
-            	                        syncWithPlugin(id, plugin, forceUpdate, allowDeletions, requiresNew, visitedZoneIds, allZoneIds, currentTenantDomain);
-            	                    }
-            	               } catch (NoSuchBeanDefinitionException e) {
-            	                    logger.error(e.getMessage());
-            	               }
-            	               
-            	                /****************************************************
-            	                 * KRZN customization END                           *
-            	                 ****************************************************/
-            	
+				/****************************************************
+				 * ldapmt customization START *
+				 ****************************************************/
+				try {
+					UserRegistry plugin = userRegistry;														
+					if (!(plugin instanceof ActivateableBean)
+							|| ((ActivateableBean) plugin).isActive()) {
+						logger.info(
+								"Synchronizing users and groups with user registry '"
+										+ id + "'/'" + tenantAdminService
+												.getCurrentUserDomain()
+										+ "'");
+						boolean requiresNew = splitTxns
+								|| AlfrescoTransactionSupport
+										.getTransactionReadState() == TxnReadState.TXN_READ_ONLY;
+						syncWithPlugin(id, plugin, forceUpdate, allowDeletions,
+								requiresNew, visitedZoneIds, allZoneIds,
+								currentTenantDomain);
+					}
+				} catch (NoSuchBeanDefinitionException e) {
+					logger.error(e.getMessage());
+				}
+	
+				/****************************************************
+				 * ldapmt customization END *
+				 ****************************************************/            	
             }
             
             /**
@@ -941,33 +932,32 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                         }, false, splitTxns);
             }
         }
-                   /**************
-                    * KRZN START *
-                    **************/
-                                                    logger.info("END tenant " + domain);
-                                                    return null;                                           
-                                                }
-                                            }, authenticationContext.getSystemUserName(domain));
-                                            return null;
-                                        }
-                                    }, false, true);
-                                    return null;
-                                }
-                            }, authenticationContext.getSystemUserName(domain));
-                        } catch (Exception e) {
-                            logger.error(e.getMessage());
-                            for (StackTraceElement ste : e.getStackTrace()) {
-                                logger.error("    " + ste.toString());
-                            }
-                        } finally {
-        //             TenantContextHolder.setTenantDomain(currentTenantDomain);
-                    }
-                 }
-            }
-            /**************
-             * KRZN END *
-             **************/
+												/******************************
+												 * ldapmt customozation START *
+												 ******************************/
+												logger.info("END tenant " + domain);
+												return null;
+											}
+										}, authenticationContext.getSystemUserName(domain));
+										return null;
+									}
+								}, false, true);
+						return null;
+					}
+				}, authenticationContext.getSystemUserName(domain));
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+				for (StackTraceElement ste : e.getStackTrace()) {
+					logger.error("    " + ste.toString());
+				}
+			} finally {
+			}
+		}
+	}
 
+	/****************************
+	 * ldapmt customization END *
+	 ****************************/
 
     /*
      * (non-Javadoc)
@@ -1104,19 +1094,17 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
      *            the set of all zone ids in the authentication chain. Helps us work out whether the zone information
      *            recorded against a user or group is invalid for the current authentication chain and whether the user
      *            or group needs to be 're-zoned'.
-     */
+     */    
     private void syncWithPlugin(final String zone, UserRegistry userRegistry, boolean forceUpdate,
             boolean isFullSync, boolean splitTxns, final Set<String> visitedZoneIds, final Set<String> allZoneIds, final String currentTenantDomain)
     {
-    	       TenantRunAsWork<Void> runAsWork = new TenantRunAsWork<Void>() {         
-    		            @Override
-    		            public Void doWork() throws Exception {
-    		                TenantContextHolder.setTenantDomain(currentTenantDomain);
-    		                logger.debug("[00] TenantContextHolder.getTenantDomain()=" + TenantContextHolder.getTenantDomain());
-    		               
-    		       /*************
-    		        * KRZN END
-    		        *************/
+    	TenantRunAsWork<Void> runAsWork = new TenantRunAsWork<Void>() {         
+	        @Override
+	        public Void doWork() throws Exception {
+	            TenantContextHolder.setTenantDomain(currentTenantDomain);
+		       /****************************
+		        * ldapmt customization END *
+		        ****************************/
     	
         // Create a prefixed zone ID for use with the authority service
         final String zoneId = AuthorityService.ZONE_AUTH_EXT_PREFIX + zone;
@@ -1212,11 +1200,12 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             public void process(NodeDescription group) throws Throwable
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END     
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END     
             	PropertyMap groupProperties = group.getProperties();
                 String groupName = (String) groupProperties.get(ContentModel.PROP_AUTHORITY_NAME);
+            	log.debug("XXXXXXXXX process " + groupName);
                 String groupShortName = ChainingUserRegistrySynchronizer.this.authorityService.getShortName(groupName);
                 Set<String> groupZones = ChainingUserRegistrySynchronizer.this.authorityService
                         .getAuthorityZones(groupName);
@@ -1238,15 +1227,18 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                     if (groupZones.contains(zoneId))
                     {
                         // The group already existed in this zone: update the group
+                    	log.debug("XXXXXXXXX The group already existed in this zone: update the group");
                         updateGroup(group, true);
                     }
                     else if (!visited.isEmpty())
                     {
                         // A group that exists in a different zone with higher precedence
+                    	log.debug("XXXXXXXXX A group that exists in a different zone with higher precedence");
                         return;
                     }
                     else if (!allowDeletions || intersection.isEmpty())
                     {
+                    	log.debug("XXXXXXXXX Fall 3");
                         // Deletions are disallowed or the group exists, but not in a zone that's in the authentication
                         // chain. May be due to upgrade or zone changes. Let's re-zone them
                         if (ChainingUserRegistrySynchronizer.logger.isWarnEnabled())
@@ -1262,6 +1254,7 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                     }
                     else
                     {
+                    	log.debug("XXXXXXXXX Fall 4");
                         // The group existed, but in a zone with lower precedence
                         if (ChainingUserRegistrySynchronizer.logger.isWarnEnabled())
                         {
@@ -1291,9 +1284,11 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
             // Recursively walks and caches the authorities relating to and from this group so that we can later detect potential cycles
             private Set<String> getContainedAuthorities(String groupName)
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END     
+            	log.debug("XXXXXXXXX getContainedAuthorities(" + groupName + ")");
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END
+
             	// Return the cached children if it is processed
                 Set<String> children = this.finalGroupChildAssocs.get(groupName);
                 if (children != null)
@@ -1314,9 +1309,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private Set<String> cacheContainedAuthorities(String groupName)
             {
-                // KRZN START
+                // ldapmt START
                 TenantContextHolder.setTenantDomain(currentTenantDomain);
-                // KRZN END     
+                // ldapmt END     
 
             	// Return the cached children if it is processed
                 Set<String> children = this.finalGroupChildAssocs.get(groupName);
@@ -1342,9 +1337,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private synchronized void updateGroup(NodeDescription group, boolean existed)
             {
-                // KRZN START
+                // ldapmt START
                 TenantContextHolder.setTenantDomain(currentTenantDomain);
-                // KRZN END     
+                // ldapmt END     
 
             	PropertyMap groupProperties = group.getProperties();
                 String groupName = (String) groupProperties.get(ContentModel.PROP_AUTHORITY_NAME);
@@ -1358,30 +1353,25 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                 Set<String> newChildPersons = newPersonSet();
                 Set<String> newChildGroups = new TreeSet<String>();
 
-                                /************************
-                                 * KRZN START
-                                 ************************/
-                //                String runAsUser = AuthenticationUtil.getRunAsUser();
-                //                String[] userNameParts = runAsUser.split("@");
-                //                String tenant = userNameParts[userNameParts.length - 1];
-                                // https://support.ecm4u.de/redmine/issues/4395
-                                String tenant = currentTenantDomain;
-                                /************************
-                                 * KRZN END
-                                 ************************/                
+                /************************
+                 * ldapmt START
+                 ************************/
+                String tenant = currentTenantDomain;
+                /************************
+                 * KRZN END
+                 ************************/                
                 
                 for (String child : group.getChildAssociations())
                 {
                     if (AuthorityType.getAuthorityType(child) == AuthorityType.USER)
                     {
-                                                /************************
-                                                 * KRZN START
-                                                 ************************/
-                                               newChildPersons.add(child + "@" + tenant);
-                                                //newChildPersons.add(child);
-                                                /************************
-                                                 * KRZN END
-                                                 ************************/                        
+	                   /************************
+	                    * ldapmt START
+	                    ************************/
+	                   newChildPersons.add(child + "@" + tenant);
+	                   /************************
+	                    * ldapmt END
+	                    ************************/                        
                     }
                     else
                     {
@@ -1440,9 +1430,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private void recordParentAssociationDeletion(String child, String parent)
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END                  
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END                  
             	Map<String, Set<String>> parentAssocs;
                 if (AuthorityType.getAuthorityType(child) == AuthorityType.USER)
                 {
@@ -1472,9 +1462,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private void recordParentAssociationCreation(String child, String parent)
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END  
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END  
             	Map<String, Set<String>> parentAssocs = AuthorityType.getAuthorityType(child) == AuthorityType.USER ? this.personParentAssocsToCreate : this.groupParentAssocsToCreate;
                 Set<String> parents = parentAssocs.get(child);
                 if (parents == null)
@@ -1490,9 +1480,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
             
             private void validateGroupParentAssocsToCreate()
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END                  
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END                  
             	Iterator<Map.Entry<String, Set<String>>> i = this.groupParentAssocsToCreate.entrySet().iterator();
                 while (i.hasNext())
                 {
@@ -1551,9 +1541,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private boolean validateAuthorityChildren(Deque<String> visited, String authority)
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END  
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END  
             	if (AuthorityType.getAuthorityType(authority) == AuthorityType.USER)
                 {
                     return true;
@@ -1602,9 +1592,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
             private boolean visitGroupParentAssocs(Deque<String> visited, String authority,
                     Map<String, Set<String>> associationsOld, Map<String, Set<String>> associationsNew)
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END  
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END  
             	if (visited.contains(authority))
                 {
                     // Prevent cyclic paths (Shouldn't happen as we've already validated)
@@ -1692,9 +1682,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private void processGroups(UserRegistry userRegistry, boolean isFullSync, boolean splitTxns)
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END               
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END               
             	// MNT-12454 fix. If syncDelete is false, there is no need to pull all users and all groups from LDAP during the full synchronization.
                if ((syncDelete || !groupsToCreate.isEmpty()) && (isFullSync || !this.groupParentAssocsToDelete.isEmpty()))
                {
@@ -1730,11 +1720,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
                         for (String person : userRegistry.getPersonNames())
                         {
-                            // KRZN START
-//                            personDeletionCandidates.remove(person);
-                            personDeletionCandidates.remove(person + "@" + currentTenantDomain);
-                            // KRZN END
-
+	                        // ldapmt START
+	                        personDeletionCandidates.remove(person + "@" + currentTenantDomain);
+	                        // ldapmt END
                         }
 
                         for (String group : userRegistry.getGroupNames())
@@ -1813,9 +1801,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
                             public void process(Map.Entry<String, Set<String>> entry) throws Throwable
                             {
-                            	                                // KRZN START
-                            	                                TenantContextHolder.setTenantDomain(currentTenantDomain);
-                            	                                // KRZN END                                 
+                                // ldapmt START
+                                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                                // ldapmt END                                 
                             	String child = entry.getKey();
 
                                 String groupDisplayName = Analyzer.this.groupsToCreate.get(child);
@@ -1847,9 +1835,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private void finalizeAssociations(UserRegistry userRegistry, boolean splitTxns)
             {
-            	                                // KRZN START
-            	                                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                                // KRZN END    
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END    
             	// First validate the group associations to be created for potential cycles. Remove any offending association
                 validateGroupParentAssocsToCreate();
                 
@@ -1918,9 +1906,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             private void maintainAssociationDeletions(String authorityName)
             {
-            	                                // KRZN START
-            	                                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                                // KRZN END                    
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END                    
             	boolean isPerson = AuthorityType.getAuthorityType(authorityName) == AuthorityType.USER;
                 Set<String> parentsToDelete = isPerson ? this.personParentAssocsToDelete.get(authorityName)
                         : this.groupParentAssocsToDelete.get(authorityName);
@@ -1947,13 +1935,16 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
         
             private void maintainAssociationCreations(String authorityName)
             {
-                // KRZN START
+            	log.debug("XXXXXXXXXXXx maintainAssociationCreations(" + authorityName + ")");
+                // ldapmt START
                 TenantContextHolder.setTenantDomain(currentTenantDomain);
-                // KRZN END                    
+                // ldapmt END                    
 
             	boolean isPerson = AuthorityType.getAuthorityType(authorityName) == AuthorityType.USER;
+            	logger.debug("isPerson=" + isPerson);
                 Set<String> parents = isPerson ? this.personParentAssocsToCreate.get(authorityName)
                         : this.groupParentAssocsToCreate.get(authorityName);
+                logger.debug("parents=" + parents);
                 if (parents != null && !parents.isEmpty())
                 {
                     if (ChainingUserRegistrySynchronizer.logger.isDebugEnabled())
@@ -2053,21 +2044,23 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             public void process(NodeDescription person) throws Throwable
             {
-            	                // KRZN START
-            	                TenantContextHolder.setTenantDomain(currentTenantDomain);
-            	                // KRZN END       
+            	logger.debug("XXX process(" + person + ")");
+                // ldapmt START
+                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                // ldapmt END       
             	// Make a mutable copy of the person properties, since they get written back to by person service
                 HashMap<QName, Serializable> personProperties = new HashMap<QName, Serializable>(person.getProperties());
                 String personName = personProperties.get(ContentModel.PROP_USERNAME).toString().trim();
+                /***************
+                 * ldapmt START
+                 ***************/               
+//                TenantContextHolder.setTenantDomain(currentTenantDomain);
+                personName = personName + "@" + currentTenantDomain;
                 personProperties.put(ContentModel.PROP_USERNAME, personName);
-                                /************
-                                 * KRZN START
-                                 ************/               
-                                TenantContextHolder.setTenantDomain(currentTenantDomain);
-                                personName = personName + "@" + currentTenantDomain;
-                                /************
-                                 * KRZN END
-                                 ************/
+                /*************
+                 * ldapmt END
+                 *************/
+                logger.debug("XXX personProperties=" + personProperties);
                 
 
                 if (Boolean.parseBoolean(ChainingUserRegistrySynchronizer.this.externalUserControl)
@@ -2108,7 +2101,7 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                     // The person did not exist at all
                     if (ChainingUserRegistrySynchronizer.logger.isDebugEnabled())
                     {
-                        ChainingUserRegistrySynchronizer.logger.debug("Creating user '" + personName + "'");
+                        ChainingUserRegistrySynchronizer.logger.debug("Creating user '" + personName + "' with properties "+ personProperties + " in zonSet '" + zoneSet + "'");
                     }
                     ChainingUserRegistrySynchronizer.this.personService.createPerson(personProperties, zoneSet);
                 }
@@ -2291,16 +2284,16 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
         
         notifySyncDirectoryEnd(zone, statusMessage);
         
-                /*************
-                 * KRZN START
-                 *************/
-                        return null;
-                    }
-                };
-                TenantUtil.runAsTenant(runAsWork, currentTenantDomain);
-                /*************
-                 * KRZN END
-                 *************/
+	    /***************
+	     * ldapmt START
+	     ***************/
+	            return null;
+	        }
+	    };
+	    TenantUtil.runAsTenant(runAsWork, currentTenantDomain);
+	    /*************
+	     * ldapmt END
+	     *************/
         
                
     } // syncWithPlugin
@@ -2551,10 +2544,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
     
     private void notifyZoneDeleted(final String zoneId)
     {
-    	       /**************
-    	        * KRZN TODO
-    	        */
-
+       /**************
+        * ldapmt TODO
+        */
 //        this.applicationEventPublisher.publishEvent(new SynchronizeDirectoryDeleteZoneEvent(this, zoneId, batchProcessNames));
     	/********/
         this.transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>()
