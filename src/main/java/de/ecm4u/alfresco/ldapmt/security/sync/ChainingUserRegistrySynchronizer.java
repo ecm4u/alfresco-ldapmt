@@ -1205,7 +1205,6 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                 // ldapmt END     
             	PropertyMap groupProperties = group.getProperties();
                 String groupName = (String) groupProperties.get(ContentModel.PROP_AUTHORITY_NAME);
-            	log.debug("XXXXXXXXX process " + groupName);
                 String groupShortName = ChainingUserRegistrySynchronizer.this.authorityService.getShortName(groupName);
                 Set<String> groupZones = ChainingUserRegistrySynchronizer.this.authorityService
                         .getAuthorityZones(groupName);
@@ -1227,18 +1226,15 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                     if (groupZones.contains(zoneId))
                     {
                         // The group already existed in this zone: update the group
-                    	log.debug("XXXXXXXXX The group already existed in this zone: update the group");
                         updateGroup(group, true);
                     }
                     else if (!visited.isEmpty())
                     {
                         // A group that exists in a different zone with higher precedence
-                    	log.debug("XXXXXXXXX A group that exists in a different zone with higher precedence");
                         return;
                     }
                     else if (!allowDeletions || intersection.isEmpty())
                     {
-                    	log.debug("XXXXXXXXX Fall 3");
                         // Deletions are disallowed or the group exists, but not in a zone that's in the authentication
                         // chain. May be due to upgrade or zone changes. Let's re-zone them
                         if (ChainingUserRegistrySynchronizer.logger.isWarnEnabled())
@@ -1254,7 +1250,6 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                     }
                     else
                     {
-                    	log.debug("XXXXXXXXX Fall 4");
                         // The group existed, but in a zone with lower precedence
                         if (ChainingUserRegistrySynchronizer.logger.isWarnEnabled())
                         {
@@ -1284,7 +1279,6 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
             // Recursively walks and caches the authorities relating to and from this group so that we can later detect potential cycles
             private Set<String> getContainedAuthorities(String groupName)
             {
-            	log.debug("XXXXXXXXX getContainedAuthorities(" + groupName + ")");
                 // ldapmt START
                 TenantContextHolder.setTenantDomain(currentTenantDomain);
                 // ldapmt END
@@ -1935,7 +1929,6 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
         
             private void maintainAssociationCreations(String authorityName)
             {
-            	log.debug("XXXXXXXXXXXx maintainAssociationCreations(" + authorityName + ")");
                 // ldapmt START
                 TenantContextHolder.setTenantDomain(currentTenantDomain);
                 // ldapmt END                    
@@ -2044,7 +2037,6 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
             public void process(NodeDescription person) throws Throwable
             {
-            	logger.debug("XXX process(" + person + ")");
                 // ldapmt START
                 TenantContextHolder.setTenantDomain(currentTenantDomain);
                 // ldapmt END       
