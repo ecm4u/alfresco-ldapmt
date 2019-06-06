@@ -718,8 +718,13 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 				/****************************************************
 				 * ldapmt customization START *
 				 ****************************************************/
+				if (!id.startsWith("ldapmt")) {
+					logger.info(
+							"zone '" + id + "' is not a ldapmt zone, skipping");
+					continue;
+				}
 				try {
-					UserRegistry plugin = userRegistry;														
+					UserRegistry plugin = userRegistry;
 					if (!(plugin instanceof ActivateableBean)
 							|| ((ActivateableBean) plugin).isActive()) {
 						logger.info(
@@ -740,7 +745,7 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 	
 				/****************************************************
 				 * ldapmt customization END *
-				 ****************************************************/            	
+				 ****************************************************/
             }
             
             /**
@@ -2052,7 +2057,6 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
                 /*************
                  * ldapmt END
                  *************/
-                logger.debug("XXX personProperties=" + personProperties);
                 
 
                 if (Boolean.parseBoolean(ChainingUserRegistrySynchronizer.this.externalUserControl)
