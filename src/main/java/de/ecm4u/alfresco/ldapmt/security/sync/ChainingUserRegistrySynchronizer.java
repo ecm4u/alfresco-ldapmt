@@ -229,7 +229,7 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
     private String userSearchBase = "ou=people,DC=example,DC=com";
     private String groupSearchBase = "o={tenant},DC=example,DC=com";
     private String personQuery = "(&(objectclass=inetOrgPerson)(memberOf=CN={TENANT}_USERS,o={tenant},DC=example,DC=com))";
-    private String personDifferentialQuery = "(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN={TENANT}_USERS,o=,o={tenant}s,DC=example,DC=com))";
+    private String personDifferentialQuery = "(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN={TENANT}_USERS,o={tenant},DC=example,DC=com))";
     private String authenticationSubsystemType = "ldapmt1";
 
     public void setGroupSearchBase(String groupSearchBase) {
