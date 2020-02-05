@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.ecm4u.alfresco</groupId>
     <artifactId>ldapmt</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <name>ldapmt Platform/Repository JAR Module</name>
-    <description>Platform/Repo JAR Module (to be included in the alfresco.war)</description>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>alfresco-ldapmt-subsystem</name>
+    <description>Alfresco subsystem to use LDAP together with Multi Tenancy.</description>
     <packaging>jar</packaging>
 
     <properties>
@@ -509,11 +509,6 @@
                 <enabled>true</enabled>
                 <updatePolicy>daily</updatePolicy>
             </snapshots>
-        </repository>
-        <!-- Alfresco Enterprise Edition Artifacts, put username/pwd for server in settings.xml -->
-        <repository>
-            <id>alfresco-private-repository</id>
-            <url>https://artifacts.alfresco.com/nexus/content/groups/private</url>
         </repository>
     </repositories>
 
