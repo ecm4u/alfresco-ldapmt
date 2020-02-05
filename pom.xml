@@ -239,13 +239,14 @@
                                 <resource>
                                     <directory>target</directory>
                                     <includes>
-                                        <include>${build.finalName}.jar</include>
+                                        <include>${project.build.finalName}.jar</include>
                                     </includes>
                                     <filtering>false</filtering>
                                 </resource>
                             </resources>
                         </configuration>
                     </execution>
+                    <!--
                     <execution>
                         <id>copy-repository-tests</id>
                         <phase>pre-integration-test</phase>
@@ -258,13 +259,14 @@
                                 <resource>
                                     <directory>target</directory>
                                     <includes>
-                                        <include>${build.finalName}-tests.jar</include>
+                                        <include>${project.build.finalName}-tests.jar</include>
                                     </includes>
                                     <filtering>false</filtering>
                                 </resource>
                             </resources>
                         </configuration>
                     </execution>
+                    -->
                 </executions>
             </plugin>
 
@@ -302,6 +304,7 @@
             </plugin>
 
             <!-- Make sure we attach the tests so we can include them when running -->
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -314,6 +317,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
 
             <!-- Runs the integration tests, any class that follows naming convention
                  "**/IT*.java", "**/*IT.java", and "**/*ITCase.java" will be considered an integration test -->
