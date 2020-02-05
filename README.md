@@ -4,6 +4,10 @@ This Alfresco module provides a subsystem that makes it possible to use LDAP/AD
 authentication and synchronization of authorities while multi-tenancy is
 enabled.
 
+## Supported Alfresco Version
+
+This module is build for and tested with Alfresco 6.1.
+
 ## Build
 
 TODO
