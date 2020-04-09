@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/ecm4u/alfresco-ldapmt/workflows/Java%20CI%20with%20Maven/badge.svg)](https://github.com/ecm4u/alfresco-ldampmt/actions)
+[![Actions Status](https://github.com/ecm4u/alfresco-ldapmt/workflows/Java%20CI%20with%20Maven/badge.svg)](https://github.com/ecm4u/alfresco-ldapmt/actions)
 
 # Alfresco LDAP Multi-Tenancy Subsystem
 
