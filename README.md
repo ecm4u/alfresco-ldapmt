@@ -1,4 +1,4 @@
-current version: 1.0.0-SNAPSHOT
+[![Actions Status](https://github.com/ecm4u/alfresco-ldapmt/workflows/Java%20CI%20with%20Maven/badge.svg)](https://github.com/ecm4u/alfresco-ldampmt/actions)
 
 # Alfresco LDAP Multi-Tenancy Subsystem
 
@@ -83,7 +83,7 @@ The default values for all properties are set in two files inside the module,
 [`ldapmt-authentication.properties`](src/main/resources/alfresco/subsystems/Authentication/ldapmt/ldapmt-authentication.properties)
 and [`ldapmt-synchronization.properties`](src/main/resources/alfresco/subsystems/Synchronization/default/ldapmt-synchronization.properties).
 
-Edit `ldapmt-authentication.properties`:
+Edit the `ldapmt-authentication.properties` inside your subsystem:
 
 ```properties
 # The URL for the LDAP server.
@@ -96,7 +96,7 @@ ldapmt.synchronization.java.naming.security.principal=cn=admin,dc=example,dc=com
 ldapmt.synchronization.java.naming.security.credentials=secret-password
 ```
 
-Edit `ldapmt-synchronization.properties`:
+Edit the `ldapmt-synchronization.properties` inside your subsystem:
 
 ```properties
 # When to synchronize authorities.
