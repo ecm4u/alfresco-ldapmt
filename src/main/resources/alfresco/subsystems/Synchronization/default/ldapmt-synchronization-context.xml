@@ -106,8 +106,8 @@
         <property name="personDifferentialQuery">
             <value>${ldapmt.synchronization.personDifferentialQuery}</value>
         </property>
-        <property name="authenticationSubsystemType">
-            <value>${ldapmt.synchronization.authenticationSubsystemType}</value>
+        <property name="authenticationSubsystemName">
+            <value>${ldapmt.synchronization.authenticationSubsystemName}</value>
         </property>
         <!-- ldapmt END -->
         

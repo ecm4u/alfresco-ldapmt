@@ -230,7 +230,7 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
     private String groupSearchBase = "o={tenant},DC=example,DC=com";
     private String personQuery = "(&(objectclass=inetOrgPerson)(memberOf=CN={TENANT}_USERS,o={tenant},DC=example,DC=com))";
     private String personDifferentialQuery = "(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN={TENANT}_USERS,o={tenant},DC=example,DC=com))";
-    private String authenticationSubsystemType = "ldapmt1";
+    private String authenticationSubsystemName = "ldapmt1";
 
     public void setGroupSearchBase(String groupSearchBase) {
         this.groupSearchBase = groupSearchBase;
@@ -256,8 +256,8 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
         this.tenantAdminService = tenantAdminService;
     }           
 
-    public void setAuthenticationSubsystemType(String authenticationSubsystemType) {
-		this.authenticationSubsystemType = authenticationSubsystemType;
+    public void setAuthenticationSubsystemName(String authenticationSubsystemName) {
+		this.authenticationSubsystemName = authenticationSubsystemName;
 	}
 	/****************************************************
     * ldapmt customization END                           *
@@ -544,7 +544,7 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 
 		List<Tenant> tenants = tenantAdminService.getAllTenants();
 		ApplicationContext contextForTenants = this.applicationContextManager
-				.getApplicationContext(authenticationSubsystemType);
+				.getApplicationContext(authenticationSubsystemName);
 		final LDAPUserRegistry userRegistry = (LDAPUserRegistry) contextForTenants.getBean(this.sourceBeanName);
 		for (final Tenant tenant : tenants) {
 			final String domain = tenant.getTenantDomain();
@@ -718,9 +718,9 @@ public class ChainingUserRegistrySynchronizer extends AbstractLifecycleBean
 				/****************************************************
 				 * ldapmt customization START *
 				 ****************************************************/
-				if (!id.startsWith("ldapmt")) {
+				if (!id.equals(authenticationSubsystemName)) {
 					logger.info(
-							"zone '" + id + "' is not a ldapmt zone, skipping");
+							"zone '" + id + "' is not the ldapmt zone '" + authenticationSubsystemName + "', skipping");
 					continue;
 				}
 				try {

@@ -30,7 +30,8 @@ installation. After configuring the module, restart Alfresco.
 
 ### Create Subsystems
 
-Create an authentication subsystem:
+Create an authentication subsystem of type `ldapmat` and give it at name, for
+example `ldapmt1`:
 
 ```
 alfresco/extension/subsystems
@@ -40,7 +41,7 @@ alfresco/extension/subsystems
             └── ldapmt-authentication.properties
 ```
 
-Create a synchronization subsystem:
+Create a default synchronization subsystem:
 
 ```
 alfresco/extension/subsystems
@@ -57,6 +58,8 @@ To use the subsystem in the authentication chain, add a `ldapmt` instance to it.
 Example:
 
 ```properties
+# The name of the `ldaptmt` authentication subsystem is `ldapmt1` which
+# corresponds to the name of the directory created above.
 authentication.chain=alfrescoNtlm1:alfrescoNtlm,ldapmt1:ldapmt
 ```
 
@@ -76,36 +79,60 @@ configured, note that this module uses **different** property names. The prefix
 `ldapmt` is required. Properties with the prefix `ldap` have no effect for this
 module!
 
-Templates for the property files are included here as
+The default values for all properties are set in two files inside the module,
 [`ldapmt-authentication.properties`](src/main/resources/alfresco/subsystems/Authentication/ldapmt/ldapmt-authentication.properties)
 and [`ldapmt-synchronization.properties`](src/main/resources/alfresco/subsystems/Synchronization/default/ldapmt-synchronization.properties).
+
+Edit `ldapmt-authentication.properties`:
+
+```properties
+# The URL for the LDAP server.
+ldapmt.authentication.java.naming.provider.url=ldap://ldap.example.com:389
+
+# The DN of the principal to use for synchronization.
+ldapmt.synchronization.java.naming.security.principal=cn=admin,dc=example,dc=com
+
+# The password of the principal.
+ldapmt.synchronization.java.naming.security.credentials=secret-password
+```
+
+Edit `ldapmt-synchronization.properties`:
+
+```properties
+# When to synchronize authorities.
+synchronization.import.cron=0 0 * * * ?
+
+# LDAP search bases for people and groups.
+ldapmt.synchronization.userSearchBase=ou=people,dc=example,dc=com
+ldapmt.synchronization.groupSearchBase=o={tenant},DC=example,DC=com
+
+# LDAP queries for people and groups.
+ldapmt.synchronization.personQuery=(&(objectclass=inetOrgPerson)(memberOf=CN={TENANT}_USERS,o={tenant},DC=example,DC=com))
+ldapmt.synchronization.personDifferentialQuery=(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN={TENANT}_USERS,o={tenant},dc=example,dc=com))
+ldapmt.synchronization.groupQuery=(objectclass\=groupOfNames)
+ldapmt.synchronization.groupDifferentialQuery=(&(objectclass\=groupOfNames)(!(modifyTimestamp<\={0})))
+
+# The name of the authentication subsystem for which this subsystem shall synchronize authorities.
+ldapmt.synchronization.authenticationSubsystemName=ldapmt1
+```
 
 #### Properties with Tenant Placeholders
 
 This subsystem assumes that authorities are organized by tenant in the LDAP/AD.
 If the authorities of the tenant `tenant` are to be synchronized, the LDAP
 queries are constructed using `tenant` and templates. This template mechanism
-applies to two configuration properties:
+applies to all configuration properties whose values contain the placeholders
+`{tenant}` or `{TENANT}`.
 
-* `ldapmt.synchronization.personQuery`
-* `ldapmt.synchronization.personDifferentialQuery`
-
-The default values for these properties are
-
-```properties
-ldapmt.synchronization.personQuery=(&(objectclass=inetOrgPerson)(memberOf=CN={TENANT}_USERS,o={tenant},DC=example,DC=com))
-ldapmt.synchronization.personDifferentialQuery=(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN={TENANT}_USERS,o={tenant},dc=example,dc=com))
-```
-
-To construct correct LDAP queries, the name of the tenant to synchronize is
+To expand such property values, the name of the tenant to synchronize is
 replaced inside the property values. The placeholder `{tenant}` is replaced
 with the name of the tenant, the placeholder `{TENANT}` is replaced with the
 name of the tenant in upper case.
 
 *Example:*
 
-The tenant name `tenant1` used together with the two default property values
-results in these effective values:
+The tenant name `tenant1` used together with the the above templated property
+values results in these effective values:
 
 * `(&(objectclass=inetOrgPerson)(memberOf=CN=TENANT1_USERS,o=tenant1,DC=example,DC=com))`
 * `(&(objectclass=inetOrgPerson)(!(modifyTimestamp<={0}))(memberOf=CN=TENANT1_USERS,o=tenant1s,dc=example,dc=com))`
