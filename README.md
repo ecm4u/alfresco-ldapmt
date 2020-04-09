@@ -30,7 +30,7 @@ installation. After configuring the module, restart Alfresco.
 
 ### Create Subsystems
 
-Create an authentication subsystem of type `ldapmat` and give it at name, for
+Create an authentication subsystem of type `ldapmt` and give it at name, for
 example `ldapmt1`:
 
 ```

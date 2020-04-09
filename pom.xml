@@ -9,6 +9,32 @@
     <description>Alfresco subsystem to use LDAP together with Multi Tenancy.</description>
     <packaging>jar</packaging>
 
+    <licenses>
+      <license>
+        <name>GNU Lesser General Public License v3+</name>
+        <url>https://github.com/ecm4u/alfresco-ldapmt/blob/master/LICENSE</url>
+      </license>
+    </licenses>
+
+  <organization>
+    <name>ecm4u GmbH</name>
+    <url>https://www.ecm4u.de/</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>lutz.horn</id>
+      <name>Lutz Horn</name>
+      <email>lutz.horn@ecm4u.de</email>
+      <organization>ecm4u GmbH</organization>
+      <organizationUrl>https://www.ecm4u.de/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>Europe/Berlin</timezone>
+    </developer>
+  </developers>
+
     <properties>
         <!-- Alfresco Maven Plugin version to use -->
         <alfresco.sdk.version>4.0.0</alfresco.sdk.version>
