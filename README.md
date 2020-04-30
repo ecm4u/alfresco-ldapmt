@@ -94,6 +94,9 @@ ldapmt.synchronization.java.naming.security.principal=cn=admin,dc=example,dc=com
 
 # The password of the principal.
 ldapmt.synchronization.java.naming.security.credentials=secret-password
+
+# The LDAP search base for users.
+ldapmt.synchronization.userSearchBase=ou=people,dc=example,dc=com
 ```
 
 Edit the `ldapmt-synchronization.properties` inside your subsystem:
