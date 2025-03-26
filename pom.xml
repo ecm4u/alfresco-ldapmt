@@ -476,7 +476,7 @@
         <profile>
             <id>java8</id>
             <activation>
-                <jdk>[1.8,11.0)</jdk>
+                <jdk>[17.0,21.0)</jdk>
             </activation>
             <build>
                 <plugins>
